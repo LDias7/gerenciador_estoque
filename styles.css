@@ -1,0 +1,253 @@
+/* Variáveis para as Cores - O azul marinho oficial da Bora Transportes! */
+:root {
+    --cor-primaria: #002855; /* Azul Marinho Escuro */
+    --cor-secundaria: #ffffff; /* Branco */
+    --cor-fundo: #f4f4f9; /* Um cinza bem clarinho */
+    --cor-alerta: #dc3545; /* Vermelho para alertas/estoque baixo */
+    --cor-terciaria: #6c757d; /* Cinza para o botão Histórico */
+}
+
+/* Reset Básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: sans-serif;
+    background-color: var(--cor-fundo);
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding-top: 50px; /* Espaço para o cabeçalho */
+}
+
+/* Cabeçalho */
+.main-header {
+    width: 100%;
+    background-color: var(--cor-primaria);
+    color: var(--cor-secundaria);
+    text-align: center;
+    padding: 20px 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+}
+
+.main-header h1 {
+    font-size: 1.8em;
+}
+
+/* Estilo Comum das Telas */
+.screen {
+    background-color: var(--cor-secundaria);
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 900px; /* Max padrão, ajustado por inline para telas menores */
+    margin-top: 100px; /* Ajuste para não colidir com o cabeçalho fixo */
+    margin-bottom: 50px;
+    display: none; /* Inicialmente todas as telas estão ocultas */
+}
+
+.screen.active {
+    display: block; /* Mostra a tela que tem a classe 'active' */
+}
+
+.sub-title {
+    color: var(--cor-primaria);
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+/* Layout e Estilo dos Botões da Tela Principal */
+.button-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 colunas */
+    gap: 20px;
+}
+
+.main-button {
+    background-color: var(--cor-primaria);
+    color: var(--cor-secundaria);
+    border: none;
+    padding: 30px 20px;
+    font-size: 1.2em;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.main-button:hover {
+    background-color: #003366; /* Um tom um pouco mais escuro ao passar o mouse */
+    transform: translateY(-2px);
+}
+
+.main-button:active {
+    background-color: #001f3f;
+    transform: translateY(0);
+}
+
+/* Estilo para Formulários */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+.form-group input[type="text"], 
+.form-group input[type="number"],
+.form-group select,
+.calculated-field,
+.filter-input { /* Adicionado a classe de filtro aqui */
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+/* Estilo para campos somente leitura e calculados */
+input[readonly], .calculated-field {
+    background-color: #e9ecef; 
+    cursor: not-allowed;
+    color: #6c757d;
+    font-weight: bold;
+}
+
+
+/* Estilo para a área de exibição de dados (Tela de Entrada/Saída/Saldo) */
+.data-display {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 5px solid var(--cor-primaria);
+}
+
+.data-display h3 {
+    color: var(--cor-primaria);
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.data-display p {
+    margin: 5px 0;
+}
+
+.estoque-alerta {
+    font-weight: bold;
+    color: var(--cor-primaria); /* Cor padrão */
+}
+.estoque-alerta.baixo {
+    color: var(--cor-alerta); /* Alerta: Vermelho */
+}
+
+/* Estilo de Destaque para o Saldo */
+.saldo-resultado .large-text {
+    font-size: 2em;
+    font-weight: 900;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+/* Estilo para os botões de ação do formulário */
+.form-actions {
+    margin-top: 30px;
+    display: flex;
+    justify-content: flex-end; /* Alinha botões à direita por padrão */
+    gap: 15px;
+}
+
+/* Estilo específico para 3 botões (Saída) */
+.form-actions-triple {
+    justify-content: space-between; /* Espalha os 3 botões */
+}
+
+.action-button {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 1em;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.action-button.primary {
+    background-color: var(--cor-primaria); /* Azul Marinho (Salvar) */
+    color: var(--cor-secundaria);
+}
+
+.action-button.primary:hover:not(:disabled) {
+    background-color: #003366;
+}
+
+.action-button.primary:disabled {
+    background-color: #a0aec0;
+    cursor: not-allowed;
+}
+
+.action-button.secondary {
+    background-color: #ccc; /* Cinza (Voltar) */
+    color: #333;
+}
+
+.action-button.secondary:hover {
+    background-color: #bbb;
+}
+
+.action-button.tertiary {
+    background-color: var(--cor-terciaria); /* Cinza Escuro (Histórico) */
+    color: var(--cor-secundaria);
+}
+.action-button.tertiary:hover {
+    background-color: #5a6268;
+}
+
+/* Estilo para Tabelas (Histórico) */
+.table-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.data-table th, .data-table td {
+    border: 1px solid #ddd;
+    padding: 10px 8px;
+    text-align: left;
+}
+
+.data-table th {
+    background-color: var(--cor-primaria);
+    color: var(--cor-secundaria);
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.85em;
+}
+
+.data-table tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bora Transportes - Controle de Estoque</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <h1>Sistema de Gestão de Estoque</h1>
+    </header>
+
+    <main id="tela-principal" class="screen active">
+        <h2 class="sub-title">Selecione uma Opção</h2>
+        <div class="button-grid">
+            <button id="btn-cadastro" class="main-button">Cadastro</button>
+            <button id="btn-entrada" class="main-button">Entrada</button>
+            <button id="btn-saida" class="main-button">Saída</button>
+            <button id="btn-saldo" class="main-button">Saldo</button>
+        </div>
+    </main>
+
+    <div id="tela-cadastro" class="screen" style="max-width: 600px;">
+        <h2 class="sub-title">Cadastro de Produto</h2>
+        
+        <form id="form-cadastro">
+            <div class="form-group">
+                <label for="codigoFabrica">Código de Fábrica:</label>
+                <input type="text" id="codigoFabrica" name="codigoFabrica" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="codigoFornecedor">Código do Fornecedor:</label>
+                <input type="text" id="codigoFornecedor" name="codigoFornecedor" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="descricaoProduto">Descrição do Produto:</label>
+                <input type="text" id="descricaoProduto" name="descricaoProduto" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="nomeFornecedor">Nome do Fornecedor:</label>
+                <input type="text" id="nomeFornecedor" name="nomeFornecedor" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="unidadeMedida">Unidade de Medida:</label>
+                <input type="text" id="unidadeMedida" name="unidadeMedida" required>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="action-button primary">Salvar</button>
+                <button type="button" class="action-button secondary" id="btn-voltar-cadastro">Voltar</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="tela-entrada" class="screen" style="max-width: 600px;">
+        <h2 class="sub-title">Registro de Entrada</h2>
+
+        <form id="form-entrada">
+            <div class="form-group search-group">
+                <label for="entradaCodigoFornecedor">Código do Fornecedor (Busca):</label>
+                <input type="text" id="entradaCodigoFornecedor" name="entradaCodigoFornecedor" required placeholder="Digite e aperte ENTER">
+            </div>
+
+            <div class="data-display" id="entrada-dados-produto" style="display: none;">
+                <h3>Dados do Produto:</h3>
+                <p><strong>Descrição:</strong> <span id="displayDescricao"></span></p>
+                <p><strong>Cód. Fábrica:</strong> <span id="displayCodFabrica"></span></p>
+                <p><strong>Fornecedor:</strong> <span id="displayFornecedor"></span></p>
+                <p><strong>Unidade:</strong> <span id="displayUnidade"></span></p>
+            </div>
+
+            <div class="new-fields" id="entrada-new-fields" style="display: none;">
+                <hr>
+                <div class="form-group">
+                    <label for="entradaQuantidade">Quantidade que Entrou:</label>
+                    <input type="number" id="entradaQuantidade" name="entradaQuantidade" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="entradaValorUnitario">Valor Unitário (R$):</label>
+                    <input type="number" id="entradaValorUnitario" name="entradaValorUnitario" step="0.01" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Valor Total (R$):</label>
+                    <input type="text" id="entradaValorTotal" readonly value="0.00" class="calculated-field">
+                </div>
+
+                <div class="form-group">
+                    <label for="entradaNotaFiscal">Nota Fiscal:</label>
+                    <input type="text" id="entradaNotaFiscal" name="entradaNotaFiscal" required>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="action-button primary" id="btn-salvar-entrada" disabled>Salvar Entrada</button>
+                <button type="button" class="action-button secondary" id="btn-voltar-entrada">Voltar</button>
+            </div>
+        </form>
+    </div>
+    
+    <div id="tela-saida" class="screen" style="max-width: 600px;">
+        <h2 class="sub-title">Registro de Saída</h2>
+
+        <form id="form-saida">
+            <div class="form-group search-group">
+                <label for="saidaCodigoFabrica">Código de Fábrica (Busca):</label>
+                <input type="text" id="saidaCodigoFabrica" name="saidaCodigoFabrica" required placeholder="Digite e aperte ENTER">
+            </div>
+
+            <div class="data-display" id="saida-dados-produto" style="display: none;">
+                <h3>Dados do Produto:</h3>
+                <p><strong>Descrição:</strong> <span id="saidaDisplayDescricao"></span></p>
+                <p><strong>Cód. Fornecedor:</strong> <span id="saidaDisplayCodFornecedor"></span></p>
+                <p><strong>Estoque Atual:</strong> <span id="saidaDisplayEstoque" class="estoque-alerta">0</span></p>
+                <p><strong>Data Atual:</strong> <span id="saidaDisplayData"></span></p>
+            </div>
+
+            <div class="new-fields" id="saida-new-fields" style="display: none;">
+                <hr>
+                <div class="form-group">
+                    <label for="saidaQuantidade">Quantidade que Saiu:</label>
+                    <input type="number" id="saidaQuantidade" name="saidaQuantidade" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="saidaPlacaCaminhao">Placa do Caminhão:</label>
+                    <input type="text" id="saidaPlacaCaminhao" name="saidaPlacaCaminhao" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="saidaDestinatario">Para quem foi enviado:</label>
+                    <input type="text" id="saidaDestinatario" name="saidaDestinatario" required>
+                </div>
+            </div>
+
+            <div class="form-actions form-actions-triple">
+                <button type="button" class="action-button tertiary" id="btn-historico-saida">Visualizar Histórico</button>
+                <button type="submit" class="action-button primary" id="btn-salvar-saida" disabled>Salvar Saída</button>
+                <button type="button" class="action-button secondary" id="btn-voltar-saida">Voltar</button>
+            </div>
+        </form>
+    </div>
+    
+    <div id="tela-historico-saida" class="screen">
+        <h2 class="sub-title">Histórico de Saídas</h2>
+
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Cód. Fábrica</th>
+                        <th>Descrição</th>
+                        <th>Qtd.</th>
+                        <th>Placa</th>
+                        <th>Destino</th>
+                    </tr>
+                </thead>
+                <tbody id="historico-saidas-body">
+                    </tbody>
+            </table>
+        </div>
+
+        <div class="form-actions" style="justify-content: center;">
+            <button type="button" class="action-button secondary" style="max-width: 200px;" id="btn-voltar-historico">Voltar</button>
+        </div>
+    </div>
+    
+    <div id="tela-saldo" class="screen" style="max-width: 700px;">
+        <h2 class="sub-title">Consulta de Saldo em Estoque</h2>
+
+        <div class="form-group">
+            <label for="saldoCodigoFabrica">Código de Fábrica (Filtro):</label>
+            <input type="text" id="saldoCodigoFabrica" placeholder="Digite o Código de Fábrica..." class="filter-input">
+        </div>
+        
+        <div class="form-group">
+            <label for="saldoDescricao">Descrição do Produto (Filtro):</label>
+            <input type="text" id="saldoDescricao" placeholder="Digite a Descrição do Produto..." class="filter-input">
+        </div>
+        
+        <hr style="margin: 30px 0;">
+
+        <div class="saldo-resultado data-display">
+            <h3>Resultado da Consulta:</h3>
+            <p><strong>Produto:</strong> <span id="saldoDisplayDescricao">Nenhum produto selecionado</span></p>
+            <p><strong>Cód. Fábrica:</strong> <span id="saldoDisplayCodFabrica">N/A</span></p>
+            <p><strong>Saldo Atual:</strong> 
+                <span id="saldoDisplayQuantidade" class="estoque-alerta large-text">0</span> 
+                <span id="saldoDisplayUnidade" class="large-text"></span>
+            </p>
+        </div>
+
+        <div class="form-actions" style="justify-content: center;">
+            <button type="button" class="action-button secondary" style="max-width: 200px;" id="btn-voltar-saldo">Voltar</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
