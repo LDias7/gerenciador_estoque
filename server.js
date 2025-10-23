@@ -8,7 +8,11 @@ const app = express();
 const PORT = 3000;
 
 // Middleware
-app.use(cors()); // Permite requisições de outras origens (seu frontend)
+app.use(cors({
+    origin: 'https://gerenciador-estoque-six.vercel.app',
+    methods: ['GET', 'POST'],
+    credentials: true,
+})); // Permite requisições de outras origens (seu frontend)
 app.use(express.json()); // Permite que o Express leia o JSON enviado no corpo das requisições POST
 
 // ------------------------------------------------------------------
@@ -229,4 +233,5 @@ app.get('/api/saldo/:codigoFabrica', (req, res) => {
 // ------------------------------------------------------------------
 app.listen(PORT, () => {
     console.log(`Servidor Express rodando em http://localhost:${PORT}`);
+
 });
