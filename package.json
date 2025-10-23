@@ -1,11 +1,12 @@
 {
-  "name": "gerenciador-estoque",
+  "name": "gerenciador_estoque",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "npm install --force" // Adicione esta linha para forçar a instalação simples
   },
   "keywords": [],
   "author": "",
@@ -14,5 +15,8 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "sqlite3": "^5.1.7"
+  },
+  "engines": {
+    "node": ">=18" // Adicione esta seção para definir a versão do Node
   }
 }
