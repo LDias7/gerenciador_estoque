@@ -14,7 +14,8 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "sqlite3": "^5.1.7"
+    "pg": "^8.12.0",  // TEM QUE TER ESSE
+    "dotenv": "^16.4.5"
   },
   "engines": {
     "node": ">=18" // Adicione esta seção para definir a versão do Node
