@@ -2,12 +2,12 @@
 // CONFIGURAÇÃO DO SERVIDOR (Node.js/Express)
 // ------------------------------------------------------------------
 const express = require('express');
-const { Pool } = require('pg');
+const { Pool } = require('pg'); 
 const cors = require('cors'); 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// URL DO SEU FRONTEND - Removi a barra final que pode causar erro de CORS
+// URL DO SEU FRONTEND - CORRIGIDA (SEM BARRA FINAL!)
 const VERCEL_FRONTEND_URL = 'https://gerenciador-estoque-six.vercel.app'; 
 
 // ------------------------------------------------------------------
@@ -16,14 +16,20 @@ const VERCEL_FRONTEND_URL = 'https://gerenciador-estoque-six.vercel.app';
 const corsOptions = {
     // Permite explicitamente o seu domínio Vercel.
     origin: VERCEL_FRONTEND_URL, 
-    // Define explicitamente os métodos permitidos, incluindo o OPTIONS (preflight)
+    // Define explicitamente os métodos permitidos, incluindo o OPTIONS
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     // Define o código de sucesso para requisições OPTIONS (preflight)
     optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions)); // Aplica as opções de CORS
-app.use(express.json());
+app.use(express.json()); // Permite ler o JSON
+
+// ------------------------------------------------------------------
+// ROTA OPTIONS (NECESSÁRIA PARA O PREFLIGHT)
+// ------------------------------------------------------------------
+// Essa rota responde a qualquer requisição OPTIONS para liberar o CORS no navegador
+app.options('*', cors(corsOptions));
 
 // ------------------------------------------------------------------
 // CONFIGURAÇÃO DO BANCO DE DADOS (PostgreSQL)
