@@ -1,7 +1,7 @@
 // =========================================================================
 // CONFIGURAÇÃO DA API
 // =========================================================================
-const API_BASE_URL = 'https://gerenciadorestoque-production.up.railway.app/api';
+const API_BASE_URL = '/api';
 
 
 // =========================================================================
@@ -493,3 +493,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 });
+
