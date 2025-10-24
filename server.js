@@ -2,33 +2,41 @@
 // CONFIGURAÇÃO DO SERVIDOR (Node.js/Express)
 // ------------------------------------------------------------------
 const express = require('express');
-const { Pool } = require('pg'); // Nova biblioteca para PostgreSQL
+const { Pool } = require('pg');
 const cors = require('cors'); 
 const app = express();
-const PORT = process.env.PORT || 3000; // Usa a porta definida pelo Railway ou 3000
+const PORT = process.env.PORT || 3000;
 
-// Middleware
-const VERCEL_FRONTEND_URL = 'https://gerenciador-estoque-six.vercel.app/'; 
-app.use(cors({
-    origin: '*', // O * (asterisco) permite requisições de QUALQUER domínio
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-}));
+// URL DO SEU FRONTEND - Removi a barra final que pode causar erro de CORS
+const VERCEL_FRONTEND_URL = 'https://gerenciador-estoque-six.vercel.app'; 
 
+// ------------------------------------------------------------------
+// CONFIGURAÇÃO DE CORS ROBUSTA PARA AMBIENTES DE PRODUÇÃO
+// ------------------------------------------------------------------
+const corsOptions = {
+    // Permite explicitamente o seu domínio Vercel.
+    origin: VERCEL_FRONTEND_URL, 
+    // Define explicitamente os métodos permitidos, incluindo o OPTIONS (preflight)
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    // Define o código de sucesso para requisições OPTIONS (preflight)
+    optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions)); // Aplica as opções de CORS
 app.use(express.json());
 
 // ------------------------------------------------------------------
 // CONFIGURAÇÃO DO BANCO DE DADOS (PostgreSQL)
 // ------------------------------------------------------------------
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL, // O Railway fornecerá essa variável
+    connectionString: process.env.DATABASE_URL, 
     ssl: {
-        rejectUnauthorized: false // Necessário para a conexão segura em ambientes como o Railway
+        rejectUnauthorized: false
     }
 });
 
 async function criarTabelas() {
     try {
-        // Acessar o banco de dados
         const client = await pool.connect();
 
         // 1. Tabela de Produtos (Cadastro)
@@ -80,7 +88,7 @@ criarTabelas();
 
 
 // ------------------------------------------------------------------
-// ROTAS DE API (Endpoints) - Atualizadas para Postgres
+// ROTAS DE API (Endpoints)
 // ------------------------------------------------------------------
 
 // Rota de Teste
@@ -134,7 +142,7 @@ app.get('/api/produtos/search', async (req, res) => {
             query += ' AND codigoFornecedor = $1';
             params.push(codigoFornecedor.toUpperCase());
         } else if (descricao) {
-            query += ' AND descricaoProduto ILIKE $1'; // ILIKE para case-insensitive
+            query += ' AND descricaoProduto ILIKE $1'; 
             params.push(`%${descricao}%`);
         } else {
             return res.status(400).json({ error: 'Parâmetros de busca inválidos.' });
@@ -248,5 +256,3 @@ app.get('/api/saldo/:codigoFabrica', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Servidor Express rodando em http://localhost:${PORT}`);
 });
-
-
