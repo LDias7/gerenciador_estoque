@@ -22,7 +22,7 @@ const corsOptions = {
     optionsSuccessStatus: 204
 };
 
-app.use(cors(corsOptions)); 
+app.use(cors()); 
 app.use(express.json());
 
 // ------------------------------------------------------------------
@@ -273,3 +273,4 @@ app.get('/api/saldo/:codigoFabrica', async (req, res) => {
         res.status(500).json({ error: 'Erro interno ao calcular saldo.', details: err.message });
     }
 });
+
