@@ -2,33 +2,32 @@
 // CONFIGURAÇÃO DO SERVIDOR (Node.js/Express)
 // ------------------------------------------------------------------
 const express = require('express');
-const { Pool } = require('pg'); 
+const { Pool } = require('pg');
 const cors = require('cors'); 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// URL DO SEU FRONTEND - CORRIGIDA (SEM BARRA FINAL!)
+// Função para criar um atraso
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// URL DO SEU FRONTEND (SEM BARRA FINAL!)
 const VERCEL_FRONTEND_URL = 'https://gerenciador-estoque-six.vercel.app'; 
 
 // ------------------------------------------------------------------
-// CONFIGURAÇÃO DE CORS ROBUSTA PARA AMBIENTES DE PRODUÇÃO
+// CONFIGURAÇÃO DE CORS ROBUSTA
 // ------------------------------------------------------------------
 const corsOptions = {
-    // Permite explicitamente o seu domínio Vercel.
-    origin: '*', 
-    // Define explicitamente os métodos permitidos, incluindo o OPTIONS
+    origin: VERCEL_FRONTEND_URL, 
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    // Define o código de sucesso para requisições OPTIONS (preflight)
     optionsSuccessStatus: 204
 };
 
-app.use(cors(corsOptions)); // Aplica as opções de CORS
-app.use(express.json()); // Permite ler o JSON
+app.use(cors(corsOptions)); 
+app.use(express.json());
 
 // ------------------------------------------------------------------
 // ROTA OPTIONS (NECESSÁRIA PARA O PREFLIGHT)
 // ------------------------------------------------------------------
-// Essa rota responde a qualquer requisição OPTIONS para liberar o CORS no navegador
 app.options('*', cors(corsOptions));
 
 // ------------------------------------------------------------------
@@ -42,55 +41,75 @@ const pool = new Pool({
 });
 
 async function criarTabelas() {
-    try {
-        const client = await pool.connect();
+    let retries = 5; // Tenta se conectar 5 vezes
+    while (retries > 0) {
+        try {
+            // Tenta se conectar e criar as tabelas
+            const client = await pool.connect();
 
-        // 1. Tabela de Produtos (Cadastro)
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS produtos (
-                codigoFabrica VARCHAR(50) PRIMARY KEY,
-                codigoFornecedor VARCHAR(50) NOT NULL,
-                descricaoProduto VARCHAR(255) NOT NULL,
-                nomeFornecedor VARCHAR(255),
-                unidadeMedida VARCHAR(10)
-            )
-        `);
+            // 1. Tabela de Produtos (Cadastro)
+            await client.query(`
+                CREATE TABLE IF NOT EXISTS produtos (
+                    codigoFabrica VARCHAR(50) PRIMARY KEY,
+                    codigoFornecedor VARCHAR(50) NOT NULL,
+                    descricaoProduto VARCHAR(255) NOT NULL,
+                    nomeFornecedor VARCHAR(255),
+                    unidadeMedida VARCHAR(10)
+                )
+            `);
 
-        // 2. Tabela de Entradas (Movimentação)
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS entradas (
-                id SERIAL PRIMARY KEY,
-                codigoFabrica VARCHAR(50) NOT NULL REFERENCES produtos(codigoFabrica),
-                quantidade INTEGER NOT NULL,
-                valorUnitario NUMERIC(10, 2) NOT NULL,
-                valorTotal NUMERIC(10, 2) NOT NULL,
-                notaFiscal VARCHAR(100),
-                dataRegistro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
+            // 2. Tabela de Entradas (Movimentação)
+            await client.query(`
+                CREATE TABLE IF NOT EXISTS entradas (
+                    id SERIAL PRIMARY KEY,
+                    codigoFabrica VARCHAR(50) NOT NULL REFERENCES produtos(codigoFabrica),
+                    quantidade INTEGER NOT NULL,
+                    valorUnitario NUMERIC(10, 2) NOT NULL,
+                    valorTotal NUMERIC(10, 2) NOT NULL,
+                    notaFiscal VARCHAR(100),
+                    dataRegistro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
 
-        // 3. Tabela de Saídas (Movimentação e Histórico)
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS saidas (
-                id SERIAL PRIMARY KEY,
-                codigoFabrica VARCHAR(50) NOT NULL REFERENCES produtos(codigoFabrica),
-                descricaoProduto VARCHAR(255),
-                quantidade INTEGER NOT NULL,
-                placaCaminhao VARCHAR(10),
-                destinatario VARCHAR(255),
-                dataRegistro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
+            // 3. Tabela de Saídas (Movimentação e Histórico)
+            await client.query(`
+                CREATE TABLE IF NOT EXISTS saidas (
+                    id SERIAL PRIMARY KEY,
+                    codigoFabrica VARCHAR(50) NOT NULL REFERENCES produtos(codigoFabrica),
+                    descricaoProduto VARCHAR(255),
+                    quantidade INTEGER NOT NULL,
+                    placaCaminhao VARCHAR(10),
+                    destinatario VARCHAR(255),
+                    dataRegistro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
 
-        client.release();
-        console.log('Tabelas PostgreSQL criadas/verificadas com sucesso!');
-    } catch (err) {
-        console.error("Erro ao criar tabelas PostgreSQL:", err);
+            client.release();
+            console.log('Tabelas PostgreSQL criadas/verificadas com sucesso!');
+            return; // Sai do loop se for bem-sucedido
+        } catch (err) {
+            retries--;
+            if (retries === 0) {
+                console.error("ERRO FATAL: Falha ao conectar ao PostgreSQL após múltiplas tentativas.", err);
+                throw err; // Lança o erro se as tentativas acabarem
+            }
+            console.log(`Conexão com DB falhou. Tentando novamente em 2 segundos... (${retries} tentativas restantes)`);
+            await sleep(2000); // Espera 2 segundos antes de tentar de novo
+        }
     }
 }
 
-// Inicia a criação das tabelas
-criarTabelas();
+// ------------------------------------------------------------------
+// INICIAR O SERVIDOR APÓS O DB ESTAR PRONTO
+// ------------------------------------------------------------------
+criarTabelas().then(() => {
+    app.listen(PORT, () => {
+        console.log(`Servidor Express rodando em http://localhost:${PORT}`);
+    });
+}).catch(err => {
+    console.error("Servidor não pôde iniciar devido a erro no DB.");
+    process.exit(1); // Encerra o processo se não conseguir conectar ao DB
+});
 
 
 // ------------------------------------------------------------------
@@ -254,12 +273,3 @@ app.get('/api/saldo/:codigoFabrica', async (req, res) => {
         res.status(500).json({ error: 'Erro interno ao calcular saldo.', details: err.message });
     }
 });
-
-
-// ------------------------------------------------------------------
-// INICIAR O SERVIDOR
-// ------------------------------------------------------------------
-app.listen(PORT, () => {
-    console.log(`Servidor Express rodando em http://localhost:${PORT}`);
-});
-
