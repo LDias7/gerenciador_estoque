@@ -6,16 +6,15 @@ const { Pool } = require('pg');
 const cors = require('cors'); 
 const app = express();
 const PORT = process.env.PORT || 3000;
-require('dotenv').config();
 
-// Função para criar um atraso
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+// Remove require('dotenv').config(); - Não é mais necessário e pode atrapalhar no Railway.
+// Remove a função sleep - Vamos usar o Pool mais simples.
 
 // URL DO SEU FRONTEND (SEM BARRA FINAL!)
 const VERCEL_FRONTEND_URL = 'https://gerenciador-estoque-six.vercel.app'; 
 
 // ------------------------------------------------------------------
-// CONFIGURAÇÃO DE CORS ROBUSTA
+// CONFIGURAÇÃO DE CORS SIMPLIFICADA E EFICAZ
 // ------------------------------------------------------------------
 const corsOptions = {
     origin: VERCEL_FRONTEND_URL, 
@@ -23,7 +22,7 @@ const corsOptions = {
     optionsSuccessStatus: 204
 };
 
-app.use(cors()); 
+app.use(cors(corsOptions)); // Aplica as opções de CORS
 app.use(express.json());
 
 // ------------------------------------------------------------------
@@ -32,95 +31,94 @@ app.use(express.json());
 app.options('*', cors(corsOptions));
 
 // ------------------------------------------------------------------
-// CONFIGURAÇÃO DO BANCO DE DADOS (PostgreSQL)
+// CONFIGURAÇÃO DO BANCO DE DADOS (PostgreSQL) - SIMPLIFICADA E CORRIGIDA
 // ------------------------------------------------------------------
-const DB_HOST = process.env.DB_HOST || 'postgres.railway.internal';
-const DB_PORT = process.env.DB_PORT || 5432; 
-const DB_USER = process.env.DB_USER;
-const DB_PASSWORD = process.env.DB_PASSWORD;
-const DB_NAME = process.env.DB_NAME;
 
+// Removendo todas as variáveis de conexão manuais (DB_HOST, DB_USER, etc.)
+// Confiando APENAS na variável DATABASE_URL fornecida pelo Railway.
 const pool = new Pool({
-    // Prioriza o DATABASE_URL, mas se não existir, usa as vars separadas:
-    connectionString: process.env.DATABASE_URL || 
-        `postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`, 
+    connectionString: process.env.DATABASE_URL, 
     ssl: {
+        // ESSENCIAL para ambientes de nuvem como o Railway
         rejectUnauthorized: false
-    },
-    // Aumentar o timeout de conexão pode ajudar
-    connectionTimeoutMillis: 10000 
+    }
 });
 
+// A função criarTabelas foi ajustada para ser sincrona e mais robusta no startup
 async function criarTabelas() {
-    let retries = 5; // Tenta se conectar 5 vezes
-    while (retries > 0) {
-        try {
-            // Tenta se conectar e criar as tabelas
-            const client = await pool.connect();
+    try {
+        // Tenta se conectar e criar as tabelas
+        const client = await pool.connect();
+        
+        // 1. Tabela de Produtos (Cadastro)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS produtos (
+                codigoFabrica VARCHAR(50) PRIMARY KEY,
+                codigoFornecedor VARCHAR(50) NOT NULL,
+                descricaoProduto VARCHAR(255) NOT NULL,
+                nomeFornecedor VARCHAR(255),
+                unidadeMedida VARCHAR(10)
+            )
+        `);
 
-            // 1. Tabela de Produtos (Cadastro)
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS produtos (
-                    codigoFabrica VARCHAR(50) PRIMARY KEY,
-                    codigoFornecedor VARCHAR(50) NOT NULL,
-                    descricaoProduto VARCHAR(255) NOT NULL,
-                    nomeFornecedor VARCHAR(255),
-                    unidadeMedida VARCHAR(10)
-                )
-            `);
+        // 2. Tabela de Entradas (Movimentação)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS entradas (
+                id SERIAL PRIMARY KEY,
+                codigoFabrica VARCHAR(50) NOT NULL REFERENCES produtos(codigoFabrica),
+                quantidade INTEGER NOT NULL,
+                valorUnitario NUMERIC(10, 2) NOT NULL,
+                valorTotal NUMERIC(10, 2) NOT NULL,
+                notaFiscal VARCHAR(100),
+                dataRegistro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
 
-            // 2. Tabela de Entradas (Movimentação)
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS entradas (
-                    id SERIAL PRIMARY KEY,
-                    codigoFabrica VARCHAR(50) NOT NULL REFERENCES produtos(codigoFabrica),
-                    quantidade INTEGER NOT NULL,
-                    valorUnitario NUMERIC(10, 2) NOT NULL,
-                    valorTotal NUMERIC(10, 2) NOT NULL,
-                    notaFiscal VARCHAR(100),
-                    dataRegistro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
+        // 3. Tabela de Saídas (Movimentação e Histórico)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS saidas (
+                id SERIAL PRIMARY KEY,
+                codigoFabrica VARCHAR(50) NOT NULL REFERENCES produtos(codigoFabrica),
+                descricaoProduto VARCHAR(255),
+                quantidade INTEGER NOT NULL,
+                placaCaminhao VARCHAR(10),
+                destinatario VARCHAR(255),
+                dataRegistro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
 
-            // 3. Tabela de Saídas (Movimentação e Histórico)
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS saidas (
-                    id SERIAL PRIMARY KEY,
-                    codigoFabrica VARCHAR(50) NOT NULL REFERENCES produtos(codigoFabrica),
-                    descricaoProduto VARCHAR(255),
-                    quantidade INTEGER NOT NULL,
-                    placaCaminhao VARCHAR(10),
-                    destinatario VARCHAR(255),
-                    dataRegistro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-
-            client.release();
-            console.log('Tabelas PostgreSQL criadas/verificadas com sucesso!');
-            return; // Sai do loop se for bem-sucedido
-        } catch (err) {
-            retries--;
-            if (retries === 0) {
-                console.error("ERRO FATAL: Falha ao conectar ao PostgreSQL após múltiplas tentativas.", err);
-                throw err; // Lança o erro se as tentativas acabarem
-            }
-            console.log(`Conexão com DB falhou. Tentando novamente em 2 segundos... (${retries} tentativas restantes)`);
-            await sleep(2000); // Espera 2 segundos antes de tentar de novo
-        }
+        client.release();
+        console.log('Tabelas PostgreSQL criadas/verificadas com sucesso!');
+        return true; 
+    } catch (err) {
+        console.error("ERRO FATAL: Falha ao criar tabelas no startup (DB inacessível).", err);
+        return false;
     }
 }
 
 // ------------------------------------------------------------------
 // INICIAR O SERVIDOR APÓS O DB ESTAR PRONTO
 // ------------------------------------------------------------------
-criarTabelas().then(() => {
-    app.listen(PORT, () => {
-        console.log(`Servidor Express rodando em http://localhost:${PORT}`);
-    });
-}).catch(err => {
-    console.error("Servidor não pôde iniciar devido a erro no DB.");
-    process.exit(1); // Encerra o processo se não conseguir conectar ao DB
-});
+
+// Função principal de inicialização
+async function startServer() {
+    // 1. Tenta criar as tabelas (o Railway tentará reconectar, mas esta é a primeira tentativa)
+    const dbReady = await criarTabelas();
+
+    if (dbReady) {
+        // 2. Inicia o servidor Express se o DB estiver ok
+        app.listen(PORT, () => {
+            console.log(`Servidor Express rodando na porta ${PORT}`);
+        });
+    } else {
+        // 3. Se falhar, encerra o processo, e o Railway tentará novamente
+        console.error("Servidor não pôde iniciar devido a erro no DB. Tentando novamente...");
+        process.exit(1); 
+    }
+}
+
+// Inicia o processo
+startServer();
 
 
 // ------------------------------------------------------------------
@@ -284,6 +282,3 @@ app.get('/api/saldo/:codigoFabrica', async (req, res) => {
         res.status(500).json({ error: 'Erro interno ao calcular saldo.', details: err.message });
     }
 });
-
-
-
