@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000; // Usa a porta definida pelo Railway ou 3000
 
 // Middleware
-const VERCEL_FRONTEND_URL = 'https://gerenciador-estoque-six.vercel.app'; 
+const VERCEL_FRONTEND_URL = 'https://gerenciador-estoque-six.vercel.app/'; 
 app.use(cors({
     origin: VERCEL_FRONTEND_URL,
     methods: ['GET', 'POST'],
@@ -248,3 +248,4 @@ app.get('/api/saldo/:codigoFabrica', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Servidor Express rodando em http://localhost:${PORT}`);
 });
+
