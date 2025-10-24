@@ -6,6 +6,7 @@ const { Pool } = require('pg');
 const cors = require('cors'); 
 const app = express();
 const PORT = process.env.PORT || 3000;
+require('dotenv').config();
 
 // Função para criar um atraso
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -273,4 +274,5 @@ app.get('/api/saldo/:codigoFabrica', async (req, res) => {
         res.status(500).json({ error: 'Erro interno ao calcular saldo.', details: err.message });
     }
 });
+
 
