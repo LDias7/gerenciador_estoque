@@ -15,7 +15,7 @@ const VERCEL_FRONTEND_URL = 'https://gerenciador-estoque-six.vercel.app';
 // ------------------------------------------------------------------
 const corsOptions = {
     // Permite explicitamente o seu domínio Vercel.
-    origin: VERCEL_FRONTEND_URL, 
+    origin: '*', 
     // Define explicitamente os métodos permitidos, incluindo o OPTIONS
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     // Define o código de sucesso para requisições OPTIONS (preflight)
@@ -262,3 +262,4 @@ app.get('/api/saldo/:codigoFabrica', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Servidor Express rodando em http://localhost:${PORT}`);
 });
+
