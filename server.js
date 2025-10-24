@@ -34,11 +34,21 @@ app.options('*', cors(corsOptions));
 // ------------------------------------------------------------------
 // CONFIGURAÇÃO DO BANCO DE DADOS (PostgreSQL)
 // ------------------------------------------------------------------
+const DB_HOST = process.env.DB_HOST || 'postgres.railway.internal';
+const DB_PORT = process.env.DB_PORT || 5432; 
+const DB_USER = process.env.DB_USER;
+const DB_PASSWORD = process.env.DB_PASSWORD;
+const DB_NAME = process.env.DB_NAME;
+
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL, 
+    // Prioriza o DATABASE_URL, mas se não existir, usa as vars separadas:
+    connectionString: process.env.DATABASE_URL || 
+        `postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`, 
     ssl: {
         rejectUnauthorized: false
-    }
+    },
+    // Aumentar o timeout de conexão pode ajudar
+    connectionTimeoutMillis: 10000 
 });
 
 async function criarTabelas() {
@@ -274,5 +284,6 @@ app.get('/api/saldo/:codigoFabrica', async (req, res) => {
         res.status(500).json({ error: 'Erro interno ao calcular saldo.', details: err.message });
     }
 });
+
 
 
